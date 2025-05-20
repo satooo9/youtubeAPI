@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Deta API</title>
+
+
+    <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200..900&display=swap" rel="stylesheet">
+
+    <!-- icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #1e1e1e;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        #player {
+            margin: 20px auto;
+            display: block;
+            width: 640px;
+            height: 390px;
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #3498db;
+            color: white;
+        }
+
+        input[type="range"],
+        input[type="color"],
+        select {
+            cursor: pointer;
+        }
+
+        .recommendation-card {
+            display: inline-block;
+            margin: 5px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #333;
+            cursor: pointer;
+        }
+
+        .recommendation-card img {
+            width: 160px;
+            height: 90px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="player"></div>
+
+    <div class="control-buttons">
+        <button id="playBtn"><i class="fa-solid fa-play"></i></button>
+        <button id="pauseBtn"><i class="fa-solid fa-pause"></i></button>
+        <button id="stopBtn"><i class="fa-solid fa-stop"></i></button>
+        <button id="muteBtn"><i class="fa-solid fa-volume-xmark"></i></button>
+        <button id="backBtn">⏪ 10秒戻る</button>
+        <button id="forwardBtn">⏩ 10秒進む</button>
+
+
+        <label>再生速度:
+            <select id="speedSelector">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="1.5">1.5x</option>
+                <option value="2">2x</option>
+            </select>
+        </label>
+        <label>音量:
+            <input type="range" id="volumeSlider" min="0" max="100" value="50" />
+        </label>
+        <label>
+            <input type="checkbox" id="loopCheckbox" /> ループ再生
+        </label>
+    </div>
+
+    <div style="text-align:center;">
+        <input type="range" id="seekbar" min="0" max="100" value="0" step="0.1">
+        <div><span id="currentTime">0:00</span> / <span id="duration">0:00</span></div>
+    </div>
+
+    <div style="text-align:center; margin: 20px;">
+        <label>検索: <input type="text" id="ytSearchText" placeholder="キーワードを入力" /></label>
+        <button id="ytSearchBtn">🔍 検索</button>
+    </div>
+
+    <div id="ytSearchResult" style="text-align:center;"></div>
+
+    <div style="text-align:center; margin: 20px;">
+        <label for="bgColorPicker">背景色変更：</label>
+        <input type="color" id="bgColorPicker" value="#1e1e1e">
+        <button id="resetBgColor">リセット</button>
+    </div>
+
+    <script>
+        let player;
+        let youtubeId = "dQw4w9WgXcQ";
+
+        const playBtn = document.getElementById("playBtn");
+        const pauseBtn = document.getElementById("pauseBtn");
+        const stopBtn = document.getElementById("stopBtn");
+        const muteBtn = document.getElementById("muteBtn");
+        const backBtn = document.getElementById("backBtn");
+        const forwardBtn = document.getElementById("forwardBtn");
+        const speedSelector = document.getElementById("speedSelector");
+        const volumeSlider = document.getElementById("volumeSlider");
+        const loopCheckbox = document.getElementById("loopCheckbox");
+        const seekbar = document.getElementById("seekbar");
+        const currentTimeDisplay = document.getElementById("currentTime");
+        const durationDisplay = document.getElementById("duration");
+        const ytSearchText = document.getElementById("ytSearchText");
+        const ytSearchBtn = document.getElementById("ytSearchBtn");
+        const ytSearchResult = document.getElementById("ytSearchResult");
+        const bgColorPicker = document.getElementById("bgColorPicker");
+        const resetBtn = document.getElementById("resetBgColor");
+
+        function formatTime(seconds) {
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60).toString().padStart(2, "0");
+            return `${min}:${sec}`;
+        }
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player("player", {
+                height: "390",
+                width: "640",
+                videoId: youtubeId,
+                playerVars: { playsinline: 1 },
+                events: {
+                    onReady: () => {
+                        volumeSlider.value = player.getVolume();
+                    },
+                    onStateChange: (event) => {
+                        if (event.data === YT.PlayerState.ENDED && loopCheckbox.checked) {
+                            player.seekTo(0);
+                            player.playVideo();
+                        }
+                    }
+                }
+            });
+        }
+
+        playBtn.onclick = () => player.playVideo();
+        pauseBtn.onclick = () => player.pauseVideo();
+        stopBtn.onclick = () => {
+            player.stopVideo();
+            player.seekTo(0);
+        };
+        muteBtn.onclick = () => player.isMuted() ? player.unMute() : player.mute();
+        backBtn.onclick = () => player.seekTo(Math.max(player.getCurrentTime() - 10, 0), true);
+        forwardBtn.onclick = () => player.seekTo(player.getCurrentTime() + 10, true);
+        speedSelector.onchange = () => player.setPlaybackRate(parseFloat(speedSelector.value));
+        volumeSlider.oninput = () => player.setVolume(volumeSlider.value);
+
+        seekbar.addEventListener("input", () => {
+            player.seekTo(parseFloat(seekbar.value), true);
+        });
+
+        setInterval(() => {
+            if (player && player.getDuration) {
+                const duration = player.getDuration();
+                const current = player.getCurrentTime();
+                seekbar.max = duration;
+                seekbar.value = current;
+                currentTimeDisplay.textContent = formatTime(current);
+                durationDisplay.textContent = formatTime(duration);
+            }
+        }, 500);
+
+        ytSearchBtn.onclick = () => {
+            const query = ytSearchText.value;
+            ytSearch(query);
+        };
+
+        /*************  ✨ Windsurf Command ⭐  *************/
+        /**
+         * YouTubeの検索結果を取得し、DOMに反映する
+         * @param {string} keyword - 検索キーワード
+         */
+        /*******  c56c3fd2-b1cb-448f-9d73-cced5c971d26  *******/
+        function ytSearch(keyword) {
+            ytSearchResult.innerHTML = "検索中...";
+            fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&key=AIzaSyDm8BtM22vPaajbT2sNlI7f9FcEpG-ppyw&q=${encodeURIComponent(keyword)}`)
+                .then(res => res.json())
+                .then(data => {
+                    ytSearchResult.innerHTML = "";
+                    data.items.forEach(item => {
+                        const videoId = item.id.videoId;
+                        const thumbnailUrl = item.snippet.thumbnails.medium.url;
+
+                        const card = document.createElement("div");
+                        card.className = "recommendation-card";
+
+                        const img = document.createElement("img");
+                        img.src = thumbnailUrl;
+                        card.appendChild(img);
+
+                        card.onclick = () => {
+                            youtubeId = videoId;
+                            player.loadVideoById(videoId);
+                        };
+
+                        ytSearchResult.appendChild(card);
+                    });
+                })
+                .catch(err => {
+                    ytSearchResult.innerHTML = "検索エラー";
+                    console.error(err);
+                });
+        }
+
+        // 背景色の保存と復元
+        const savedColor = localStorage.getItem("bgColor");
+        if (savedColor) {
+            document.body.style.backgroundColor = savedColor;
+            bgColorPicker.value = savedColor;
+        }
+
+        bgColorPicker.addEventListener("input", (e) => {
+            document.body.style.backgroundColor = e.target.value;
+            localStorage.setItem("bgColor", e.target.value);
+        });
+
+        resetBtn.addEventListener("click", () => {
+            document.body.style.backgroundColor = "#1e1e1e";
+            bgColorPicker.value = "#1e1e1e";
+            localStorage.removeItem("bgColor");
+        });
+
+        // YouTube IFrame API 読み込み
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        document.body.appendChild(tag);
+    </script>
+</body>
+
+</html>

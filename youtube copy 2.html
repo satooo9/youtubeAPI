@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>YouTube Deta API</title>
+
+    <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200..900&display=swap" rel="stylesheet">
+
+    <!-- icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+        integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        body {
+            font-family: "Noto Serif JP", serif;
+            background-color: #A93226;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        nav ul {
+            align-items: center;
+            list-style: none;
+            padding: 0;
+            margin: 20px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            max-width: 900px;
+        }
+
+        li,
+        label {
+            background-color: #282828;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            text-align: center;
+        }
+
+        li:hover,
+        .case:hover {
+            color: #2a2a2a;
+            background-color: #ececec;
+        }
+
+        #player {
+            display: block;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            margin: 20px 20px;
+            gap: 8px;
+        }
+
+        input[type="search"] {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            width: 200px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #ff0000;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #cc0000;
+        }
+
+        select,
+        input[type="range"] {
+            background-color: #282828;
+            color: #fff;
+            border: none;
+            padding: 6px;
+            border-radius: 6px;
+        }
+
+        #volumeNum {
+            margin-left: 10px;
+        }
+
+        #seekbar {
+            width: 80%;
+            margin: 5px auto;
+            display: block;
+        }
+
+        #doSpeed input[type="radio"] {
+            display: none;
+        }
+
+        #doSpeed label {
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        #doSpeed input[type="radio"]:checked+label {
+            background-color: #cc0000;
+            color: white;
+            font-weight: bold;
+        }
+
+        #loopToggle {
+            transition: color 0.3s ease;
+        }
+
+        .menu {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .volume {
+            display: flex;
+            align-items: center;
+        }
+
+        #volume {
+            margin: 0 10px;
+        }
+
+
+
+        .recommendations .item {
+            background-color: #333;
+            border-radius: 8px;
+            overflow: hidden;
+            width: 200px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .recommendations .item:hover {
+            transform: scale(1.05);
+        }
+
+        .recommendations img {
+            width: 100%;
+            height: auto;
+        }
+
+        .recommendations .title {
+            padding: 10px;
+            font-size: 14px;
+            color: white;
+            text-align: center;
+        }
+
+        .colorcontroller {
+            margin-bottom: 10px;
+        }
+
+        .recommendation-list {
+            flex-wrap: wrap;
+            display: flex;
+            flex-direction: row;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+
+        .recommendation-card {
+            flex: 0 0 23%;
+            background: #d8d8d8;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+
+        .recommendation-card img {
+            width: 100%;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="player"></div>
+
+    <!-- シークバー -->
+    <!-- <input type="range" id="seekbar" min="0" max="100" value="0" step="0.1">
+    <div>
+        <span id="currentTime">0:00</span> / <span id="duration">0:00</span>
+    </div> -->
+
+
+
+    <nav>
+        <ul>
+            <li id="doplay"><i class="fa-solid fa-play"></i></li>
+            <li id="dostop"><i class="fa-solid fa-pause"></i></li>
+            <li id="dopause"><i class="fa-solid fa-stop"></i></li>
+            <li id="mute"><i class="fa-solid fa-volume-xmark"></i></li>
+
+            <li id="do10sPrev"><i class="fa-solid fa-backward"></i></li>
+            <li id="do10sNext"><i class="fa-solid fa-forward"></i></li>
+            <li id="loopToggle"><i class="fa-solid fa-repeat"></i></li>
+        </ul>
+
+
+        <div class="menu">
+
+            <label class="volume">
+                <i class="fa-solid fa-volume-low"></i>
+                <input type="range" min="0" max="100" name="volume" id="volume" value="50" />
+                <span id="volumeNum"></span>
+            </label>
+
+
+            <form id="doSpeed">
+                <input type="radio" id="mslow" name="speed" value="0.25" />
+                <label for="mslow" class="case">0.25</label>
+                <input type="radio" id="slow" name="speed" value="0.5" />
+                <label for="slow" class="case">0.5</label>
+                <input type="radio" id="normal" name="speed" value="1.0" checked />
+                <label for="normal" class="case">1</label>
+                <input type="radio" id="hspeed" name="speed" value="1.5" />
+                <label for="hspeed" class="case">1.5</label>
+                <input type="radio" id="mhspeed" name="speed" value="2" />
+                <label for="mhspeed" class="case">2</label>
+            </form>
+
+        </div>
+
+    </nav>
+
+
+    <div style="text-align: center; margin: 10px;">
+        <label for="bgColorPicker">背景色変更：</label>
+        <input type="color" id="bgColorPicker" value="#A93226">
+    </div>
+
+
+    <section class="recommendations">
+        <!-- <h2>★ おすすめ動画</h2> -->
+        <div id="recommendationList" class="recommendation-list"></div>
+    </section>
+
+
+
+    <form>
+        <input type="search" id="ytSearch" value="TRiDENT" />
+        <button id="searchBtn">検索</button>
+    </form>
+
+    <!-- <select class="searchlist"></select> -->
+
+
+
+    <!-- 検索結果（おすすめ）の表示エリア -->
+    <div class="recommendations"
+        style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 20px;">
+    </div>
+
+
+
+
+    <script>
+
+        var tag = document.createElement('script');
+
+        tag.src = 'https://www.youtube.com/iframe_api';
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+
+        var player;
+        let youtubeId = '_GSuWkZ3kms';     // 初期動画
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '540',
+                width: '960',
+                videoId: youtubeId,
+                playerVars: {
+                    playsinline: 1,
+                    controls: 0
+                },
+                events: {
+                    onReady: onPlayerReady,
+                    onStateChange: onPlayerStateChange
+                }
+            });
+        }
+
+
+        function onPlayerReady(event) {
+            let currentVol = 10; // ← ここを好きな初期音量（0〜100）に設定
+            event.target.setVolume(currentVol); // 音量を設定
+            document.querySelector('#volume').value = currentVol;
+            document.querySelector('#volumeNum').textContent = currentVol;
+
+            event.target.playVideo(); // 再生（必要に応じて削除可）
+        }
+
+
+
+        var done = false;
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED && isLooping) {
+                player.seekTo(0);
+                player.playVideo();
+            }
+        }
+
+
+        let isLooping = false;
+        const loopToggleBtn = document.querySelector('#loopToggle');
+        loopToggleBtn.addEventListener('click', () => {
+            isLooping = !isLooping;
+
+            // アイコンの見た目変更（色を変える）
+            if (isLooping) {
+                loopToggleBtn.style.color = '#00ff00'; // 緑
+            } else {
+                loopToggleBtn.style.color = ''; // 初期化
+            }
+        });
+
+
+        //動画切り替えイベント
+        let movieid = document.querySelector('#MovieId');
+        movieid.addEventListener('change', function () {
+            youtubeId = movieid.value;
+            //プレイヤー削除
+            player.destroy();
+            onYouTubeIframeAPIReady();
+        });
+
+
+        // 停止関数
+        function stopVideo() {
+            player.stopVideo();
+        }
+
+        // 停止イベント
+        let dostopBtn = document.querySelector('#dostop');
+        dostopBtn.addEventListener('click', function () {
+            stopVideo();
+        });
+
+
+        // 再生関数
+        function playTheVideo() {
+            player.playVideo();
+        }
+
+        // 再生イベント
+        let doplayBtn = document.querySelector('#doplay');
+        doplayBtn.addEventListener('click', function () {
+            playTheVideo();
+        });
+
+
+        // 一時停止関数
+        function pauseTheVideo() {
+            player.pauseVideo();
+        }
+
+        // 一時停止イベント
+        let dopauseBtn = document.querySelector('#dopause');
+        dopauseBtn.addEventListener('click', function () {
+            pauseTheVideo();
+        });
+
+
+        // ミュート関数
+        function onMute() {
+            if (player.isMuted()) {
+                player.unMute();
+            } else {
+                player.mute();
+            }
+        }
+
+        // ミュートイベント
+        let onMuteBtn = document.querySelector('#mute');
+        onMuteBtn.addEventListener('click', function () {
+            onMute();
+            if (onMuteBtn.innerHTML === '<i class="fa-solid fa-volume-xmark"></i>') {
+                onMuteBtn.innerHTML = '<i class="fa-solid fa-volume-low"></i>';
+            } else {
+                onMuteBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            }
+        });
+
+
+        //10秒前にの関数
+        function onePrev() {
+            let currentTime = player.getCurrentTime();
+            player.seekTo(currentTime - 10);
+        }
+
+        //10秒後にの関数
+        function oneNext() {
+            let currentTime = player.getCurrentTime();
+            player.seekTo(currentTime + 10);
+        }
+
+        //10秒前へイベント
+        let onePrevBtn = document.querySelector('#do10sPrev');
+        onePrevBtn.addEventListener('click', function () {
+            onePrev();
+        });
+
+        //10秒後へイベント
+        let oneNextBtn = document.querySelector('#do10sNext');
+        oneNextBtn.addEventListener('click', function () {
+            oneNext();
+        });
+
+
+
+        const bgColorPicker = document.getElementById('bgColorPicker');
+        const resetBtn = document.getElementById('resetBgColor');
+        const defaultColor = '#A93226';
+
+
+        // 色変更時の処理（変更＋保存）
+        bgColorPicker.addEventListener('input', function () {
+            const color = this.value;
+            document.body.style.backgroundColor = color;
+            localStorage.setItem('bgColor', color);
+        });
+
+
+        //ボリューム関数
+        function volumeFn(vol) {
+            let currentVol = player.getVolume();
+            player.setVolume(vol);
+        }
+
+        //ボリュームイベント
+        let volumeBtn = document.querySelector('#volume');
+        let volumeTxt = document.querySelector('#volumeNum');
+        volumeBtn.addEventListener('change', function () {
+            volumeFn(this.value);
+            volumeTxt.textContent = this.value;
+        });
+
+
+        //再生スピード関数
+        function playSpeed(num) {
+            console.log(num);
+            player.setPlaybackRate(num);
+            player.playVideo();
+        }
+
+        //再生スピードイベント
+        let speedBtn = document.querySelector('#doSpeed');
+        speedBtn.addEventListener('change', function () {
+            playSpeed(parseFloat(speedBtn.speed.value));
+        });
+
+
+        const selectvideo = document.querySelector(".searchlist");
+
+        /*************  ✨ Windsurf Command ⭐  *************/
+        /**
+         * Youtubeの検索結果を取得し、DOMに反映する
+         * @param {string} val - 検索キーワード
+/*******  5ec73b75-4d43-45cd-9bb8-1ff92fedaf1f  *******/
+        function ytSearch(val) {
+            // const key = 'AIzaSyA5dUUFNqBUVU9AsF0L-pRhMV2K-TPHNP4';
+            const key = "AIzaSyDm8BtM22vPaajbT2sNlI7f9FcEpG-ppyw";
+            const num = 10;
+            const part = 'snippet';
+            const type = 'video';
+            const query = val;
+            fetch(
+                `https://www.googleapis.com/youtube/v3/search?type=${type}&part=${part}&maxResults=${num}&key=${key}&q=${query}&playsinline=1`
+            )
+                .then((data) => data.json())
+                .then((obj) => {
+                    const container = document.querySelector('.recommendations');
+                    container.innerHTML = ''; // 検索ごとにリセット
+
+                    for (let movie of obj["items"]) {
+                        //各videoIdとタイトルを取得して変数に代入
+                        const ytId = movie["id"]["videoId"];
+                        const ytTitle = movie["snippet"]["title"];
+                        //optionを作成して、videoIdとtitleを所定の場所に設置し、要素を追加していく。
+                        const optionTag = document.createElement('option');
+                        optionTag.textContent = ytTitle;
+                        optionTag.setAttribute('value', ytId);
+                        selectvideo.appendChild(optionTag);
+                    }
+                });
+        }
+
+
+        const ytSearchBtn = document.querySelector('#searchBtn');
+        ytSearchBtn.addEventListener('click', function (e) {
+            const ytSearchVal = document.querySelector('#ytSearch').value;
+            console.log(ytSearchVal); //検索フォームの値を取得
+
+            e.preventDefault(); //検索ボタンの送信をストップしておく。
+        });
+
+
+        ytSearch(ytSearchVal); ytSearchBtn.addEventListener('click', function (e) {
+            e.preventDefault(); // フォーム送信を止める
+            const ytSearchVal = document.querySelector('#ytSearch').value;
+            ytSearch(ytSearchVal);
+        });
+
+
+        window.addEventListener('load', () => {
+            ytSearch('TRiDENT'); // 初期表示
+        });
+
+
+        // ページ読み込み時に保存された背景色を反映
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedColor = localStorage.getItem('bgColor');
+            if (savedColor) {
+                document.body.style.backgroundColor = savedColor;
+                bgColorPicker.value = savedColor;
+            }
+        });
+
+
+        // 色変更 → 背景＋保存
+        bgColorPicker.addEventListener('input', function () {
+            const color = this.value;
+            document.body.style.backgroundColor = color;
+            localStorage.setItem('bgColor', color);
+        });
+
+        // ページ読み込み → 背景に保存色を反映
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedColor = localStorage.getItem('bgColor');
+            if (savedColor) {
+                document.body.style.backgroundColor = savedColor;
+                bgColorPicker.value = savedColor;
+            }
+        });
+
+        // リセットボタン
+        resetBtn.addEventListener('click', () => {
+            document.body.style.backgroundColor = defaultColor;
+            localStorage.removeItem('bgColor');
+            bgColorPicker.value = defaultColor;
+        });
+
+
+
+        // シークバーと時間表示の更新処理
+        const seekbar = document.getElementById('seekbar');
+        const currentTimeDisplay = document.getElementById('currentTime');
+        const durationDisplay = document.getElementById('duration');
+
+        // 時間を mm:ss 表記にする関数
+        function formatTime(time) {
+            const minutes = Math.floor(time / 60);
+            const seconds = Math.floor(time % 60).toString().padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        // 動画の時間情報取得とシークバー更新処理（1秒ごと）
+        setInterval(() => {
+            if (player && player.getCurrentTime) {
+                const current = player.getCurrentTime();
+                const duration = player.getDuration();
+                if (!isNaN(current) && !isNaN(duration)) {
+                    seekbar.max = duration;
+                    seekbar.value = current;
+                    currentTimeDisplay.textContent = formatTime(current);
+                    durationDisplay.textContent = formatTime(duration);
+                }
+            }
+        }, 1000);
+
+        // シークバーを操作したときの処理
+        seekbar.addEventListener('input', function () {
+            if (player && player.seekTo) {
+                player.seekTo(parseFloat(this.value), true);
+            }
+        });
+
+
+        const recommendations = [
+            {
+                videoId: "XVEkMhzHLTQ",
+                title: "フュージョン / DI: Verse",
+                thumb: "https://img.youtube.com/vi/XVEkMhzHLTQ/mqdefault.jpg"
+            },
+            {
+                videoId: "a_NB6QkfzAM",
+                title: "YOASOBI「Watch me!」",
+                thumb: "https://img.youtube.com/vi/a_NB6QkfzAM/mqdefault.jpg"
+            },
+            {
+                videoId: "hVuPwbnH1RQ",
+                title: "Sou「ただ、君のままで」",
+                thumb: "https://img.youtube.com/vi/hVuPwbnH1RQ/mqdefault.jpg"
+            },
+            {
+                videoId: "KpbHJBrHLzw",
+                title: "ジレンマ　メガテラ・ゼロ",
+                thumb: "https://img.youtube.com/vi/KpbHJBrHLzw/mqdefault.jpg"
+            },
+            {
+                videoId: "xbVdMk8SEu8",
+                title: "「TO BE HERO X」ナイス編",
+                thumb: "https://img.youtube.com/vi/xbVdMk8SEu8/mqdefault.jpg"
+            },
+            {
+                videoId: "isu6OthQH2Y",
+                title: "【崩壊：スターレイル】<br>キャラクターPV",
+                thumb: "https://img.youtube.com/vi/isu6OthQH2Y/mqdefault.jpg"
+            },
+            {
+                videoId: "Ifebl6oGZV8",
+                title: "🦊 | Short Film",
+                thumb: "https://img.youtube.com/vi/Ifebl6oGZV8/mqdefault.jpg"
+            },
+            {
+                videoId: "vnucQMu0uqo",
+                title: "『魔入りました！入間くん<br>if Episode of 魔フィア』<br>1巻発売記念PV",
+                thumb: "https://img.youtube.com/vi/vnucQMu0uqo/mqdefault.jpg"
+            }
+
+        ];
+
+        function renderRecommendations() {
+            const container = document.getElementById('recommendationList');
+            recommendations.slice(0, 10).forEach(video => {
+                const card = document.createElement('div');
+                card.className = 'recommendation-card';
+                card.innerHTML = `
+                        <img src="${video.thumb}" alt="${video.title}">
+                            <p>${video.title}</p>
+                            `;
+                /*************  ✨ Windsurf Command ⭐  *************/
+                // Video card click handler.
+                // Loads the selected video and adds it to history.
+                /*******  eda12f77-3e37-4c4f-bccf-7cee76088409  *******/
+                card.onclick = () => {
+                    player.loadVideoById(video.videoId);
+                    addToHistory(video);
+                };
+                container.appendChild(card);
+            });
+        }
+
+        renderRecommendations();
+
+    </script>
+</body>
+
+</html>

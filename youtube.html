@@ -10,6 +10,15 @@
     <!-- 1. ここの<div>タグがYoutubeの<iframe>に置き換わる。 -->
     <div id="player"></div>
     <!-- 動画が表示されている<div>の下に追加 -->
+
+    <!-- 検索フォーム -->
+    <form>
+        <input type="search" id="ytSearch" value="TRiDENT" />
+        <button id="searchBtn">検索</button>
+    </form>
+
+    <select class="searchlist"></select>
+
     <nav>
         <ul>
             <li id="doplay">再生</li>
@@ -222,6 +231,53 @@
             //数値でないと効かないので、文字列から数値に変換
             playSpeed(parseFloat(speedBtn.speed.value));
         });
+
+
+        // 授業資料　セレクトメニューに代入
+        const selectvideo = document.querySelector(".searchlist");
+
+        // 授業資料　クリックイベントとAjax取得を組み合わせる
+        // 検索する関数を定義
+        function ytSearch(val) {
+            const key = 'AIzaSyA5dUUFNqBUVU9AsF0L-pRhMV2K-TPHNP4'; //自分のキーに書き換えます。
+            const num = 10;
+            const part = 'snippet';
+            const type = 'video';
+            const query = val;
+            fetch(
+                `https://www.googleapis.com/youtube/v3/search?type=${type}&part=${part}&maxResults=${num}&key=${key}&q=${query}&playsinline=1`
+            )
+                .then((data) => data.json())
+                .then((obj) => {
+                    // console.log(obj);
+                    // console.log(obj["items"][1]["snippet"]["title"]) // 情報を持ってくるやつ
+
+                    // 初期化
+                    selectvideo.textContent = "";
+
+                    for (let movie of obj["items"]) {
+                        //各videoIdとタイトルを取得して変数に代入
+                        const ytId = movie["id"]["videoId"];
+                        const ytTitle = movie["snippet"]["title"];
+                        //optionを作成して、videoIdとtitleを所定の場所に設置し、要素を追加していく。
+                        const optionTag = document.createElement('option');
+                        optionTag.textContent = ytTitle;
+                        optionTag.setAttribute('value', ytId);
+                        selectvideo.appendChild(optionTag);
+                    }
+                });
+        }
+
+        // 検索ボタンのクリック操作
+        const ytSearchBtn = document.querySelector('#searchBtn');
+        ytSearchBtn.addEventListener('click', function (e) {
+            const ytSearchVal = document.querySelector('#ytSearch').value;
+            console.log(ytSearchVal); //検索フォームの値を取得
+            ytSearch(ytSearchBtn) // 関数を実行する
+            e.preventDefault(); //検索ボタンの送信をストップしておく。
+        });
+
+
     </script>
 
 </body>
